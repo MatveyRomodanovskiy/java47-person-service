@@ -10,21 +10,21 @@ import telran.java47.person.dto.PersonDto;
 public interface PersonService {
 	Boolean addPerson(PersonDto personDto);
 
-	PersonDto findPersonById(Integer id);
+	PersonDto findPersonById(Integer id) throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
-	Iterable<PersonDto> findByCity(String city);
+	Iterable<PersonDto> findByCity(String city) throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 	
-	Iterable<PersonDto> findByAgeBeetween(Integer ageFrom, Integer ageTo);
+	Iterable<PersonDto> findByAgeBeetween(Integer ageFrom, Integer ageTo) throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
-	PersonDto updatePerson(Integer id, String newName);
+	PersonDto updatePerson(Integer id, String newName) throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
-	Iterable<PersonDto> findPersonsByName(String searchName);
+	Iterable<PersonDto> findPersonsByName(String searchName) throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
 	 List<CityPopulationDto> findCityPopulation();
 
-	PersonDto updateAddress(Integer id, AddressDto addressDto);
+	PersonDto updateAddress(Integer id, AddressDto addressDto) throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
-	PersonDto deletePerson(Integer id);
+	PersonDto deletePerson(Integer id) throws ClassNotFoundException, InstantiationException, IllegalAccessException;
 
 
 

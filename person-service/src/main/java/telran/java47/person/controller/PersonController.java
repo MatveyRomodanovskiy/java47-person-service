@@ -32,27 +32,27 @@ public class PersonController {
 	}
 
 	@GetMapping("/{id}")
-	public PersonDto findPersonById(@PathVariable Integer id) {
+	public PersonDto findPersonById(@PathVariable Integer id) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		return personService.findPersonById(id);
 	}
 	
 	@GetMapping("/city/{city}")
-	public Iterable<PersonDto> findPersonsByCity(@PathVariable String city) {
+	public Iterable<PersonDto> findPersonsByCity(@PathVariable String city) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		return personService.findByCity(city);
 	}
 
 	@GetMapping("/ages/{ageFrom}/{ageTo}")
-	public Iterable<PersonDto> findPersonsByAge(@PathVariable Integer ageFrom, @PathVariable Integer ageTo) {		
+	public Iterable<PersonDto> findPersonsByAge(@PathVariable Integer ageFrom, @PathVariable Integer ageTo) throws ClassNotFoundException, InstantiationException, IllegalAccessException {		
 		return personService.findByAgeBeetween(ageFrom, ageTo);
 	}
 	
 	@PutMapping("/{id}/name/{newName}")
-	public PersonDto updatePerson(@PathVariable Integer id, @PathVariable String newName) {
+	public PersonDto updatePerson(@PathVariable Integer id, @PathVariable String newName) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		return personService.updatePerson(id, newName);
 	}
 	
 	@GetMapping("/name/{searchName}")
-	public Iterable<PersonDto> findPersonsByName(@PathVariable String searchName) {		
+	public Iterable<PersonDto> findPersonsByName(@PathVariable String searchName) throws ClassNotFoundException, InstantiationException, IllegalAccessException {		
 		return personService.findPersonsByName(searchName);
 	}
 	@GetMapping("/population/city")
@@ -61,12 +61,12 @@ public class PersonController {
 	}
 	
 	@PutMapping("/{id}/address")
-	public PersonDto updateAddress(@PathVariable Integer id, @RequestBody AddressDto addressDto) {
+	public PersonDto updateAddress(@PathVariable Integer id, @RequestBody AddressDto addressDto) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		return personService.updateAddress(id, addressDto);
 	}
 	
 	@DeleteMapping("/{id}")
-	public PersonDto deletePerson(@PathVariable Integer id) {
+	public PersonDto deletePerson(@PathVariable Integer id) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		return personService.deletePerson(id);
 	}
 }

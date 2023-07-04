@@ -11,28 +11,38 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tomcat.util.buf.C2BConverter;
+import org.aspectj.weaver.NewConstructorTypeMunger;
 import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.ActionGrouping;
 import org.modelmapper.ModelMapper;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import telran.java47.person.dao.PersonRepository;
 import telran.java47.person.dto.AddressDto;
 import telran.java47.person.dto.CityPopulationDto;
+import telran.java47.person.dto.EmployeeDto;
+import telran.java47.person.dto.ChildDto;
 import telran.java47.person.dto.PersonDto;
 import telran.java47.person.dto.exceptions.PersonNotFoundException;
 import telran.java47.person.model.Address;
+import telran.java47.person.model.Child;
+import telran.java47.person.model.Employee;
 import telran.java47.person.model.Person;
+
 
 @Service
 @RequiredArgsConstructor
-public class PersonServiceImpl implements PersonService {
+public class PersonServiceImpl implements PersonService, CommandLineRunner {
 
+	private static final String DTO_CLASS =   "telran.java47.person.dto.";
 	final PersonRepository personRepository;
 	final ModelMapper modelMapper;
 
 	@Override
+	@Transactional
 	public Boolean addPerson(PersonDto personDto) {
 		if (personRepository.existsById(personDto.getId())) {
 			return false;
@@ -41,21 +51,26 @@ public class PersonServiceImpl implements PersonService {
 		return true;
 	}
 
+
 	@Override
-	public PersonDto findPersonById(Integer id) {
+	public PersonDto findPersonById(Integer id) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		Person person = personRepository.findById(id).orElseThrow(PersonNotFoundException::new);
-		return modelMapper.map(person, PersonDto.class);
+		return createDtoObj(person);
+
 	}
 
+	
 	@Override
-	public Iterable<PersonDto> findByCity(String city) {
-		return personRepository.findByAddressCity(city).stream().map(person -> modelMapper.map(person, PersonDto.class))
+	@Transactional (readOnly = true)
+	public Iterable<PersonDto> findByCity(String city) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		List<Person> persons = personRepository.findByAddressCityIgnoreCase(city)
 				.collect(Collectors.toList());
-
+		return createListDto(persons);
 	}
 
 	@Override
-	public Iterable<PersonDto> findByAgeBeetween(Integer ageFrom, Integer ageTo) {
+	@Transactional (readOnly = true)
+	public Iterable<PersonDto> findByAgeBeetween(Integer ageFrom, Integer ageTo) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		LocalDate starDate = LocalDate.now().minusYears(ageTo);
 		LocalDate endDate = LocalDate.now().minusYears(ageFrom);
 		if (endDate.isBefore(starDate)) {
@@ -63,47 +78,77 @@ public class PersonServiceImpl implements PersonService {
 			starDate = endDate;
 			endDate = tmpDate;
 		}
-		return personRepository.findByBirthDateBetween(starDate, endDate).stream()
-				.map(person -> modelMapper.map(person, PersonDto.class)).collect(Collectors.toList());
+		List<Person> persons = personRepository.findByBirthDateBetween(starDate, endDate)
+				.collect(Collectors.toList());	
+		return createListDto(persons);
 	}
 
 	@Override
-	public PersonDto updatePerson(Integer id, String newName) {
+	@Transactional
+	public PersonDto updatePerson(Integer id, String newName) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		Person person = personRepository.findById(id).orElseThrow(PersonNotFoundException::new);
 		person.setName(newName);
-		personRepository.save(person);
-		return modelMapper.map(person, PersonDto.class);
+//		personRepository.save(person);
+		return createDtoObj(person);
 	}
 
 	@Override
-	public Iterable<PersonDto> findPersonsByName(String searchName) {
-		return personRepository.findPersonsByName(searchName).stream()
-				.map(person -> modelMapper.map(person, PersonDto.class)).collect(Collectors.toList());
+	@Transactional (readOnly = true)
+	public Iterable<PersonDto> findPersonsByName(String searchName) throws ClassNotFoundException, InstantiationException, IllegalAccessException {	
+		List<Person> persons =  personRepository.findPersonsByNameIgnoreCase(searchName)
+				.collect(Collectors.toList());
+		return createListDto(persons);
 	}
 
 	@Override
 	public List<CityPopulationDto> findCityPopulation() {
-		Map<String, Integer> cityPopulationMap = personRepository.findAll().stream()
-				.map(person -> person.getAddress().getCity())
-				.collect(Collectors.toMap(city -> city, val -> 1, Integer::sum));
-		List<CityPopulationDto> cityPopulationDtoList = new ArrayList<>();
-		cityPopulationMap.forEach((k, v) -> cityPopulationDtoList.add(new CityPopulationDto(k, v)));
-		return cityPopulationDtoList;
+		return	personRepository.getCitiesPopulation();
+
 	}
 
 	@Override
-	public PersonDto updateAddress(Integer id, AddressDto addressDto) {
+	@Transactional
+	public PersonDto updateAddress(Integer id, AddressDto addressDto) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		Person person = personRepository.findById(id).orElseThrow(PersonNotFoundException::new);
 		person.setAddress(modelMapper.map(addressDto, Address.class));
-		personRepository.save(person);
-		return modelMapper.map(person, PersonDto.class);
+//		personRepository.save(person);
+		return createDtoObj(person);
 	}
 
 	@Override
-	public PersonDto deletePerson(Integer id) {
+	@Transactional
+	public PersonDto deletePerson(Integer id) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		Person person = personRepository.findById(id).orElseThrow(PersonNotFoundException::new);	
 		personRepository.deleteById(id);
-		return modelMapper.map(person, PersonDto.class);
+		return createDtoObj(person);
 	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		if (personRepository.count() == 0) {
+			Person person = new Person(1000, "John", LocalDate.of(1985,  4, 11), new Address("Tel Aviv", "Ben Gvirol", 87));
+			Child child = new Child(2000, "Mosche", LocalDate.of(2018, 7, 5), new Address("Ashkelon", "Bar Kohva", 21), "Shalom");
+			Employee employee = new Employee(3000, "Sarah", LocalDate.of(1995, 11, 23), new Address("Rehovot", "Herzl", 7), "Motorola", 20_000);
+			personRepository.save(person);
+			personRepository.save(child);
+			personRepository.save(employee);
+		}
+		
+	}
+	
+	private PersonDto createDtoObj(Object obj) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		String classname = obj.getClass().getSimpleName();
+		classname = DTO_CLASS + classname + "Dto";
+		return  (PersonDto) modelMapper.map(obj, Class.forName(classname));	
+	}
+	
+	private Iterable<PersonDto> createListDto(List<Person> persons) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		List<PersonDto> personsDtos = new ArrayList<>();
+		for (int i=0; i < persons.size(); i++) {
+			personsDtos.add(createDtoObj(persons.get(i)));		
+		}
+		return personsDtos;
+	}
+
 
 }
