@@ -1,21 +1,15 @@
 package telran.java47.person.service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.tomcat.util.buf.C2BConverter;
-import org.aspectj.weaver.NewConstructorTypeMunger;
-import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator.ActionGrouping;
+import java.util.ArrayList;
+
+import java.util.List;
+
+import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,8 +17,6 @@ import lombok.RequiredArgsConstructor;
 import telran.java47.person.dao.PersonRepository;
 import telran.java47.person.dto.AddressDto;
 import telran.java47.person.dto.CityPopulationDto;
-import telran.java47.person.dto.EmployeeDto;
-import telran.java47.person.dto.ChildDto;
 import telran.java47.person.dto.PersonDto;
 import telran.java47.person.dto.exceptions.PersonNotFoundException;
 import telran.java47.person.model.Address;
@@ -36,8 +28,10 @@ import telran.java47.person.model.Person;
 @Service
 @RequiredArgsConstructor
 public class PersonServiceImpl implements PersonService, CommandLineRunner {
-
-	private static final String DTO_CLASS =   "telran.java47.person.dto.";
+	@Value("${address.prefix}")
+	String class_prefix;
+	@Value("${address.postfix}")
+	String class_postfix;
 	final PersonRepository personRepository;
 	final ModelMapper modelMapper;
 
@@ -138,7 +132,7 @@ public class PersonServiceImpl implements PersonService, CommandLineRunner {
 	
 	private PersonDto createDtoObj(Object obj) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		String classname = obj.getClass().getSimpleName();
-		classname = DTO_CLASS + classname + "Dto";
+		classname = class_prefix + classname + class_postfix;
 		return  (PersonDto) modelMapper.map(obj, Class.forName(classname));	
 	}
 	
